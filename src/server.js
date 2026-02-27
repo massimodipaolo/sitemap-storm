@@ -320,8 +320,6 @@ async function testUrl(url, customHeaders = {}) {
   let statusText = '';
   let responseTime = 0;
   
-  console.log(`Testing URL: ${url}`);
-  
   try {
     // Merge custom headers with default User-Agent
     const headers = {
@@ -349,7 +347,7 @@ async function testUrl(url, customHeaders = {}) {
       success: status >= 200 && status < 400
     };
     
-    console.log(`Completed: ${url} - Status: ${status}, Time: ${responseTime}ms`);
+    console.log(`${url} - Status: ${status}, Time: ${responseTime}ms`);
     return result;
   } catch (error) {
     const result = {
