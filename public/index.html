@@ -5,103 +5,573 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sitemap Stress Tester</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #0cebeb 0%, #20e3b2 100%);
+            --danger-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --warning-gradient: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%);
+            --dark-bg: #1a1d29;
+            --card-bg: #242938;
+            --card-hover: #2d3246;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --border-color: #3a3f5c;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        * {
+            transition: all 0.3s ease;
+        }
+        
         body {
             padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
         }
+        
         .container {
             max-width: 1200px;
         }
+        
+        h1, h2, h3, h4 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        
+        .page-header {
+            background: var(--primary-gradient);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-20px, 20px) rotate(180deg); }
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            color: white;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .github-link {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white !important;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .github-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
         .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            animation: slideUp 0.5s ease;
         }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            border: none !important;
+            padding: 20px 25px;
+            font-weight: 600;
+        }
+        
+        .card-header h3, .card-header h4 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .card-header small {
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: #667eea;
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .form-range {
+            height: 6px;
+        }
+        
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary-gradient);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .form-range::-moz-range-thumb {
+            background: var(--primary-gradient);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            border: none;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+            font-size: 1.1rem;
+            padding: 15px 35px;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(12, 235, 235, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            background: rgba(12, 235, 235, 0.1);
+            border-left: 4px solid #0cebeb;
+            color: var(--text-primary);
+        }
+        
+        .alert-info {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-left: 4px solid #667eea;
+        }
+        
+        .alert-info strong {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .alert-info #estimated-throughput {
+            color: #0cebeb;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .alert-success {
+            background: rgba(32, 227, 178, 0.1);
+            border-left: 4px solid #20e3b2;
+        }
+        
         .progress {
-            height: 20px;
+            height: 25px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
-        #url-list {
+        
+        .progress-bar {
+            background: var(--success-gradient);
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(12, 235, 235, 0.3);
+        }
+        
+        #url-list, #header-list {
             max-height: 300px;
             overflow-y: auto;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 15px;
         }
+        
+        #url-list::-webkit-scrollbar, #header-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #url-list::-webkit-scrollbar-track, #header-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        #url-list::-webkit-scrollbar-thumb, #header-list::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 10px;
+        }
+        
         .url-item {
-            padding: 5px;
-            border-bottom: 1px solid #eee;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            margin-bottom: 5px;
         }
+        
+        .url-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+        
         .chart-container {
             position: relative;
             height: 300px;
             margin-bottom: 20px;
         }
+        
         .result-item {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.03);
         }
+        
+        .result-item:hover {
+            background: rgba(255,255,255,0.05);
+            transform: translateX(5px);
+        }
+        
+        .result-item strong {
+            color: var(--text-primary);
+        }
+        
+        .result-item .row {
+            margin-top: 10px;
+        }
+        
         .success {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #20e3b2;
+            background: linear-gradient(90deg, rgba(12, 235, 235, 0.1) 0%, transparent 100%);
         }
+        
         .error {
-            background-color: #f8d7da;
-            border-left: 4px solid #dc3545;
+            border-left: 4px solid #f5576c;
+            background: linear-gradient(90deg, rgba(245, 87, 108, 0.1) 0%, transparent 100%);
         }
+        
         .warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
+            border-left: 4px solid #ffd93d;
+            background: linear-gradient(90deg, rgba(255, 217, 61, 0.1) 0%, transparent 100%);
         }
+        
         #dashboard {
             display: none;
         }
+        
         .stats-box {
             text-align: center;
-            padding: 15px;
-            border-radius: 5px;
+            padding: 25px;
+            border-radius: 16px;
             color: white;
-            font-weight: bold;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .stats-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .stats-box:hover::before {
+            opacity: 1;
+        }
+        
+        .stats-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
         .stats-box h3 {
-            font-size: 2rem;
+            font-size: 2.5rem;
             margin: 0;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
+        
         .stats-box p {
-            margin-top: 5px;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            margin-top: 8px;
+            font-size: 0.95rem;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
         }
+        
         .total-requests {
-            background: #6610f2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+        
         .success-rate {
-            background: #20c997;
+            background: linear-gradient(135deg, #0cebeb 0%, #20e3b2 100%);
         }
+        
         .avg-time {
-            background: #fd7e14;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
+        
         .error-rate {
-            background: #dc3545;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .badge {
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .badge.bg-success {
+            background: var(--success-gradient) !important;
+        }
+        
+        .badge.bg-danger {
+            background: var(--danger-gradient) !important;
+        }
+        
+        .badge.bg-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        .badge.bg-warning {
+            background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%) !important;
+        }
+        
+        .header-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+        
+        .header-item input {
+            flex: 1;
+        }
+        
+        .header-item button {
+            flex-shrink: 0;
+        }
+        
+        .header-item .badge {
+            font-size: 0.85rem;
+        }
+        
+        .header-item span:not(.badge) {
+            color: var(--text-secondary);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .input-group .btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        small.text-muted {
+            font-size: 0.85rem;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        #header-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        /* Fix text visibility on dark background */
+        small, p, span:not(.badge), div {
+            color: var(--text-secondary);
+        }
+        
+        p, h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary) !important;
+        }
+        
+        .d-flex span {
+            color: var(--text-primary);
+        }
+        
+        #progress-text {
+            color: var(--text-primary) !important;
+            font-weight: 500;
+        }
+        
+        #concurrency-value, #delay-value, #max-urls-value {
+            color: var(--text-primary) !important;
+            font-weight: 600;
+        }
+        
+        #urls-completed, #urls-total, #live-success-count, #live-error-count, #live-avg-time, #live-active-requests {
+            color: var(--text-primary) !important;
+        }
+        
+        .card-body p, .card-body span:not(.badge) {
+            color: var(--text-secondary);
+        }
+        
+        .result-item {
+            color: var(--text-primary);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center my-4">
-            <h1>Sitemap Stress Tester</h1>
-            <a href="https://github.com/massimodipaolo/sitemap-storm" target="_blank" class="btn btn-outline-dark">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1>⚡ Sitemap Storm</h1>
+            <a href="https://github.com/massimodipaolo/sitemap-storm" target="_blank" class="github-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
                 </svg>
-                GitHub
+                View on GitHub
             </a>
         </div>
         
         <div id="setup" class="card">
-            <div class="card-header bg-primary text-white">
-                <h3>Setup Test</h3>
+            <div class="card-header">
+                <h3>🎯 Setup Load Test</h3>
             </div>
             <div class="card-body">                <div class="mb-3">
-                    <label for="sitemap-file" class="form-label">Upload Sitemap XML File</label>
-                    <input class="form-control" type="file" id="sitemap-file" accept=".xml">
+                    <label class="form-label">Sitemap Source</label>
+                    <div class="mb-2">
+                        <label for="sitemap-file" class="form-label">Upload Sitemap XML File</label>
+                        <input class="form-control" type="file" id="sitemap-file" accept=".xml">
+                    </div>
+                    <div class="text-center my-2">
+                        <span class="text-muted">— OR —</span>
+                    </div>
+                    <div class="mb-2">
+                        <label for="sitemap-url" class="form-label">Fetch from URL</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="sitemap-url" placeholder="https://example.com/sitemap.xml">
+                            <button class="btn btn-primary" type="button" id="fetch-sitemap">Fetch</button>
+                        </div>
+                    </div>
                     <small class="text-muted mt-2 d-block">Don't have a sitemap? <a href="/sample-sitemap" target="_blank">Use our sample sitemap</a></small>
                 </div>
                 
@@ -142,6 +612,25 @@
                         </div>
                     </div>
                     
+                    <div class="alert alert-info mb-3">
+                        <strong>🔥 Expected Request Rate:</strong>
+                        <span id="estimated-throughput">~180 requests/min</span>
+                        <small class="d-block mt-1">
+                            With <span id="info-concurrency">3</span> concurrent users and <span id="info-delay">500</span>ms delay (assuming ~1s avg response time)
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Custom Headers (Optional)</label>
+                        <small class="text-muted d-block mb-2">Add custom headers like Authorization, API keys, etc.</small>
+                        <div id="header-list" class="border rounded p-2 bg-light mb-2"></div>
+                        <div class="d-flex gap-2">
+                            <input type="text" id="header-key" class="form-control" placeholder="Header name (e.g., Authorization)">
+                            <input type="text" id="header-value" class="form-control" placeholder="Header value (e.g., Bearer token123)">
+                            <button id="add-header" class="btn btn-primary">Add Header</button>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label class="form-label">URLs to Test</label>
                         <div id="url-list" class="border rounded p-2 bg-light"></div>
@@ -152,8 +641,8 @@
             </div>
         </div>
           <div id="progress-container" class="card d-none">
-            <div class="card-header bg-info text-white">
-                <h3>Test Progress</h3>
+            <div class="card-header">
+                <h3>🔄 Test Progress</h3>
             </div>
             <div class="card-body">
                 <div class="progress mb-3">
@@ -161,19 +650,30 @@
                 </div>
                 <p id="progress-text">Initializing test...</p>
                 <div class="d-flex justify-content-between mb-2">
-                    <span id="urls-completed">0</span> of <span id="urls-total">0</span> URLs tested
+                    <span id="urls-completed">0</span> of <span id="urls-total">0</span> requests completed
                 </div>
                 <div class="mb-3">
                     <span class="badge bg-success me-2">Success: <span id="live-success-count">0</span></span>
                     <span class="badge bg-danger me-2">Errors: <span id="live-error-count">0</span></span>
-                    <span class="badge bg-info">Avg Time: <span id="live-avg-time">0</span> ms</span>
+                    <span class="badge bg-info me-2">Avg Time: <span id="live-avg-time">0</span> ms</span>
+                    <span class="badge bg-warning text-dark">Active Users: <span id="live-active-requests">0</span></span>
+                </div>
+                <div class="mb-3">
+                    <h5 class="mb-2">Response Time Performance (ms)</h5>
+                    <div style="position: relative; height: 200px;">
+                        <canvas id="live-rate-chart"></canvas>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 mt-2">
+                        <small><span style="display: inline-block; width: 12px; height: 12px; background: #20e3b2; border-radius: 2px;"></span> Avg Response Time</small>
+                        <small><span style="display: inline-block; width: 12px; height: 12px; background: #667eea; border-radius: 2px;"></span> Target (1s)</small>
+                    </div>
                 </div>
                 <button id="abort-test" class="btn btn-danger">Abort Test</button>
             </div>
         </div>
         
         <div id="dashboard" class="mt-4">
-            <h2 class="mb-4">Test Results</h2>
+            <h2 class="mb-4">📊 Test Results</h2>
             
             <div class="row mb-4">
                 <div class="col-md-3">
@@ -206,7 +706,7 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
-                            <h4>Response Time Distribution (ms)</h4>
+                            <h4>⚡ Response Time Distribution (ms)</h4>
                         </div>
                         <div class="card-body">
                             <div class="chart-container">
@@ -218,7 +718,7 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
-                            <h4>Status Code Distribution</h4>
+                            <h4>📈 Status Code Distribution</h4>
                         </div>
                         <div class="card-body">
                             <div class="chart-container">
@@ -231,7 +731,8 @@
             
             <div class="card mt-4">
                 <div class="card-header">
-                    <h4>Detailed Results</h4>
+                    <h4>📋 Results by URL</h4>
+                    <small class="text-muted">Aggregated statistics for each tested URL</small>
                 </div>
                 <div class="card-body">
                     <div id="results-container"></div>
