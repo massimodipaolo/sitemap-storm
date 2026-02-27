@@ -183,17 +183,28 @@ app.post('/api/stress-test', async (req, res) => {
 });
 
 // Perform stress test logic with progress callback - simulates multiple concurrent users
+// Helper function to shuffle array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 async function performStressTestStreaming(urls, concurrency = 3, delayMs = 500, customHeaders = {}, onProgress) {
   const results = [];
   const totalUrls = urls.length;
   const totalRequests = totalUrls * concurrency; // Each "user" tests all URLs
   let completed = 0;
   
-  // Create an array representing each user's progress through the URL list
+  // Create an array representing each user's progress through their own randomized URL list
   const users = Array.from({ length: concurrency }, (_, userId) => ({
     userId,
     urlIndex: 0,
-    active: true
+    active: true,
+    urls: shuffleArray(urls) // Each user gets the same URLs but in different random order
   }));
   
   return new Promise((resolve, reject) => {
@@ -210,7 +221,8 @@ async function performStressTestStreaming(urls, concurrency = 3, delayMs = 500, 
         return;
       }
       
-      const url = urls[user.urlIndex];
+      // Get URL from this user's shuffled list
+      const url = user.urls[user.urlIndex];
       const currentUrlIndex = user.urlIndex;
       user.urlIndex++;
       
