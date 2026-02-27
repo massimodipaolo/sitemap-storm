@@ -1,28 +1,39 @@
-# Sitemap Stress Tester
+# ⚡ Sitemap Storm
 
-A web application for stress testing websites using sitemap.xml files to determine performance under load.
+Web application for stress testing websites using sitemap.xml files to determine performance under load. 
 
-## Features
+## ✨ Features
 
-- Upload and parse any sitemap.xml file
-- Configure test parameters:
-  - Concurrent requests (1-20)
+- **Flexible Sitemap Input**
+  - Upload sitemap.xml files directly
+  - Fetch sitemaps from any URL
+  - Sample sitemap included for testing
+
+- **Configurable Test Parameters**
+  - Concurrent requests (simultaneous users)
   - Delay between batches (0-2000ms)
   - Max URLs to test (10% to 100% of sitemap)
-- Real-time progress tracking
-- Detailed results dashboard with:
+  - Custom HTTP headers support (for authentication, API keys, etc.)
+
+- **Real-Time Monitoring**
+  - Live progress tracking with animated charts
+  - Active request counter
+  - Success/error counts in real-time
+  - Average response time updates
+  - Expected request rate calculator
+
+- **Comprehensive Dashboard**
   - Response time distribution chart
   - Status code distribution chart
   - Success/error rates
-  - Average response time
-  - Detailed results for each URL
-- Export results to CSV
+  - Average response time metrics
+  - Detailed per-URL statistics
 
-## Installation
+## 🚀 Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/sitemap-storm.git
+git clone https://github.com/massimodipaolo/sitemap-storm.git
 
 # Navigate to the project directory
 cd sitemap-storm
@@ -34,28 +45,32 @@ npm install
 npm start
 ```
 
-## Usage
+The application will be available at http://localhost:3000
+
+## 📖 Usage
 
 1. Open your browser and navigate to http://localhost:3000
-2. Upload a sitemap.xml file
-3. Configure the test parameters:
+2. **Load a sitemap**:
+   - Upload a sitemap.xml file, OR
+   - Enter a sitemap URL and click "Fetch", OR
+   - Use the included sample sitemap
+3. **Configure test parameters**:
    - Adjust concurrent requests (default: 3)
    - Set delay between batches (default: 500ms)
    - Choose the percentage of URLs to test (default: 100%)
-4. Click "Start Stress Test"
-5. View the results in the dashboard
-6. Export results to CSV if needed
+   - Add custom headers if needed (optional)
+4. **Review estimated throughput** displayed on screen
+5. Click "Start Stress Test"
+6. **Monitor** real-time progress with live charts
+7. **Analyze** detailed results in the dashboard
 
-## Sample Sitemap
+## 📋 Scripts
 
-A sample sitemap is included in the `public` folder for testing purposes.
+```bash
+npm start     # Start the production server
+npm run dev   # Start development server with auto-reload
+```
 
-## Technology Stack
+## 📄 Sample Sitemap
 
-- Frontend: HTML, CSS, JavaScript, Chart.js, Bootstrap
-- Backend: Node.js, Express
-- Libraries: xml2js for XML parsing, axios for HTTP requests
-
-## License
-
-MIT
+A sample sitemap is included at `/sample-sitemap.xml` for testing purposes. You can access it directly in the app or use your own sitemap URLs.
