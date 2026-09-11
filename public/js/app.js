@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
     // Chart instances
     let responseTimeChart = null;
     let statusChart = null;
+    let cacheStatusChart = null;
     let liveRateChart = null;
     
     // Test data
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
     
     // Live rate tracking
     let recentResponseTimes = [];
+    let recentCacheResults = [];
     let baselineTime = 1000; // 1 second baseline
     let rateCheckInterval = null;
       // Update range sliders
@@ -82,8 +84,16 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
     });
     
     maxUrlsInput.addEventListener('input', () => {
-        maxUrlsValue.textContent = `${maxUrlsInput.value}%`;
+        updateMaxUrlsDisplay();
     });
+
+    function updateMaxUrlsDisplay() {
+        const percentage = parseInt(maxUrlsInput.value);
+        const selectedUrlCount = Math.ceil(sitemapUrls.length * (percentage / 100));
+        maxUrlsValue.textContent = `${percentage}% (${selectedUrlCount} URLs)`;
+    }
+
+    updateMaxUrlsDisplay();
     
     // Calculate and display estimated throughput
     function updateEstimatedThroughput() {
@@ -252,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             if (data.success && data.urls && data.urls.length > 0) {
                 sitemapUrls = data.urls;
                 urlCountSpan.textContent = sitemapUrls.length;
+                updateMaxUrlsDisplay();
                 sitemapPreview.classList.remove('d-none');
                 renderUrlList();
             } else {
@@ -296,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             if (data.success && data.urls && data.urls.length > 0) {
                 sitemapUrls = data.urls;
                 urlCountSpan.textContent = sitemapUrls.length;
+                updateMaxUrlsDisplay();
                 sitemapPreview.classList.remove('d-none');
                 
                 // Display URLs
@@ -361,10 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
         document.getElementById('live-success-count').textContent = '0';
         document.getElementById('live-error-count').textContent = '0';
         document.getElementById('live-avg-time').textContent = '0';
+        document.getElementById('live-cache-hit-rate').textContent = '0';
         document.getElementById('live-active-requests').textContent = '0';
         
         // Initialize live rate tracking
         recentResponseTimes = [];
+        recentCacheResults = [];
         baselineTime = 1000; // 1 second
         initializeLiveRateChart();
         startRateTracking();
@@ -426,7 +440,19 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                         borderDash: [5, 5],
                         tension: 0,
                         fill: false,
-                        pointRadius: 0
+                        pointRadius: 0,
+                        yAxisID: 'responseTime'
+                    },
+                    {
+                        label: 'Cache Hit Rate',
+                        data: [],
+                        borderColor: '#ff9f43',
+                        backgroundColor: 'rgba(255, 159, 67, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 3,
+                        yAxisID: 'cacheRate'
                     }
                 ]
             },
@@ -445,6 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                         grid: { color: 'rgba(255,255,255,0.05)' }
                     },
                     y: {
+                        id: 'responseTime',
+                        position: 'left',
                         beginAtZero: true,
                         ticks: { color: '#adb5bd' },
                         grid: { color: 'rgba(255,255,255,0.05)' },
@@ -452,6 +480,22 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                             display: true,
                             text: 'Response Time (ms)',
                             color: '#e9ecef'
+                        }
+                    },
+                    cacheRate: {
+                        type: 'linear',
+                        position: 'right',
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            color: '#ff9f43',
+                            callback: value => `${value}%`
+                        },
+                        grid: { drawOnChartArea: false },
+                        title: {
+                            display: true,
+                            text: 'Cache Hit Rate',
+                            color: '#ff9f43'
                         }
                     }
                 },
@@ -472,9 +516,11 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             // Calculate average response time from recent results
             const recentLimit = 20; // Use last 20 requests for moving average
             const recentSlice = recentResponseTimes.slice(-recentLimit);
+            const recentCacheSlice = recentCacheResults.slice(-recentLimit);
             const avgResponseTime = Math.round(
                 recentSlice.reduce((sum, time) => sum + time, 0) / recentSlice.length
             );
+            const cacheHitRate = getCacheHitRate(recentCacheSlice);
             
             // Get current time label
             const timeLabel = new Date().toLocaleTimeString();
@@ -483,12 +529,14 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             liveRateChart.data.labels.push(timeLabel);
             liveRateChart.data.datasets[0].data.push(avgResponseTime);
             liveRateChart.data.datasets[1].data.push(baselineTime);
+            liveRateChart.data.datasets[2].data.push(cacheHitRate);
             
             // Keep only last 15 data points for readability
             if (liveRateChart.data.labels.length > 15) {
                 liveRateChart.data.labels.shift();
                 liveRateChart.data.datasets[0].data.shift();
                 liveRateChart.data.datasets[1].data.shift();
+                liveRateChart.data.datasets[2].data.shift();
             }
             
             liveRateChart.update();
@@ -585,6 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                 
                 // Track response time for chart
                 recentResponseTimes.push(data.result.responseTime);
+                recentCacheResults.push(data.result);
                 
                 // Update progress bar
                 progressBar.style.width = `${data.percent}%`;
@@ -598,6 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                 document.getElementById('live-success-count').textContent = data.successCount;
                 document.getElementById('live-error-count').textContent = data.errorCount;
                 document.getElementById('live-avg-time').textContent = data.avgResponseTime;
+                document.getElementById('live-cache-hit-rate').textContent = getCacheHitRate(testResults);
                 document.getElementById('live-active-requests').textContent = data.activeRequests || 0;
                 
                 console.log(`Progress: ${data.percent}% - ${data.result.url} - ${data.result.status} - ${data.result.responseTime}ms`);
@@ -659,6 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
         // Generate charts
         createResponseTimeHistogram(responseTimes);
         createStatusCodeChart(testResults);
+        createCacheStatusChart(testResults);
         
         // Display detailed results
         displayDetailedResults(testResults);
@@ -710,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             groupedByUrl[result.url].push(result);
         });
         
-        const headers = ['URL', 'Total Requests', 'Success Rate (%)', 'Min Response Time (ms)', 'Max Response Time (ms)', 'Avg Response Time (ms)', 'Status Codes'];
+        const headers = ['URL', 'Total Requests', 'Success Rate (%)', 'Min Response Time (ms)', 'Max Response Time (ms)', 'Avg Response Time (ms)', 'Status Codes', 'X-Nextjs-Cache', 'Cf-Cache-Status'];
         const rows = Object.entries(groupedByUrl).map(([url, urlResults]) => {
             const responseTimes = urlResults.map(r => r.responseTime);
             const minTime = Math.min(...responseTimes);
@@ -733,6 +784,8 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             const statusDisplay = Object.entries(statusGroups)
                 .map(([status, count]) => `${status}(${count})`)
                 .join(' ');
+            const nextjsCacheDisplay = formatCacheStatusCounts(urlResults, 'nextjsCacheStatus');
+            const cfCacheDisplay = formatCacheStatusCounts(urlResults, 'cfCacheStatus');
             
             return [
                 url,
@@ -741,7 +794,9 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                 minTime,
                 maxTime,
                 avgTime,
-                statusDisplay
+                statusDisplay,
+                nextjsCacheDisplay,
+                cfCacheDisplay
             ];
         });
         
@@ -886,6 +941,70 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             }
         });
     }
+
+    function getCacheHitRate(results) {
+        if (results.length === 0) return 0;
+
+        const cacheHits = results.filter(result => {
+            const nextjsStatus = String(result.nextjsCacheStatus || '').toUpperCase();
+            const cfStatus = String(result.cfCacheStatus || '').toUpperCase();
+            return nextjsStatus.includes('HIT') || cfStatus === 'HIT';
+        }).length;
+
+        return Math.round((cacheHits / results.length) * 100);
+    }
+
+    function formatCacheStatusCounts(results, property) {
+        const counts = {};
+        results.forEach(result => {
+            const status = result[property] || 'Not reported';
+            counts[status] = (counts[status] || 0) + 1;
+        });
+
+        return Object.entries(counts)
+            .map(([status, count]) => `${status} (${count})`)
+            .join(', ');
+    }
+
+    function createCacheStatusChart(results) {
+        const ctx = document.getElementById('cache-status-chart').getContext('2d');
+        const cacheCounts = {};
+
+        results.forEach(result => {
+            const nextjsStatus = result.nextjsCacheStatus || 'Not reported';
+            const cfStatus = result.cfCacheStatus || 'Not reported';
+            const nextjsLabel = `Next.js: ${nextjsStatus}`;
+            const cfLabel = `Cloudflare: ${cfStatus}`;
+            cacheCounts[nextjsLabel] = (cacheCounts[nextjsLabel] || 0) + 1;
+            cacheCounts[cfLabel] = (cacheCounts[cfLabel] || 0) + 1;
+        });
+
+        if (cacheStatusChart) {
+            cacheStatusChart.destroy();
+        }
+
+        cacheStatusChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(cacheCounts),
+                datasets: [{
+                    label: 'Requests',
+                    data: Object.values(cacheCounts),
+                    backgroundColor: ['rgba(32, 227, 178, 0.6)', 'rgba(255, 159, 67, 0.6)', 'rgba(102, 126, 234, 0.6)', 'rgba(245, 87, 108, 0.6)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, title: { display: true, text: 'Requests' } }
+                }
+            }
+        });
+    }
     
     // Display detailed results
     function displayDetailedResults(results) {
@@ -922,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             // Determine overall status class
             const successCount = urlResults.filter(r => r.success).length;
             const successRate = (successCount / totalRequests) * 100;
+            const hasErrors = urlResults.some(r => !r.success);
             let statusClass = 'success';
             if (successRate < 50) {
                 statusClass = 'error';
@@ -937,15 +1057,72 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                 totalRequests,
                 statusGroups,
                 statusClass,
-                successRate
+                successRate,
+                hasErrors,
+                nextjsCacheDisplay: formatCacheStatusCounts(urlResults, 'nextjsCacheStatus'),
+                cfCacheDisplay: formatCacheStatusCounts(urlResults, 'cfCacheStatus')
             };
         });
         
         // Sort by average response time (descending)
         urlStats.sort((a, b) => b.avgTime - a.avgTime);
-        
-        // Display each URL group
-        urlStats.forEach(stats => {
+
+        const entriesPerPerformanceGroup = Math.min(urlStats.length, Math.min(10, Math.max(3, Math.ceil(urlStats.length * 0.1))));
+        const errorStats = urlStats.filter(stats => stats.hasErrors);
+        const healthyStats = urlStats.filter(stats => !stats.hasErrors);
+        const slowestStats = healthyStats.slice(0, entriesPerPerformanceGroup);
+        const fastestStats = healthyStats.slice(-entriesPerPerformanceGroup).reverse();
+        const shownUrlCount = new Set([
+            ...errorStats.map(stats => stats.url),
+            ...slowestStats.map(stats => stats.url),
+            ...fastestStats.map(stats => stats.url)
+        ]).size;
+
+        const summary = document.createElement('p');
+        summary.className = 'text-muted mb-3';
+        summary.textContent = `Showing ${shownUrlCount} of ${urlStats.length} URLs: all URLs with errors plus the ${entriesPerPerformanceGroup} slowest and fastest URLs.`;
+        container.appendChild(summary);
+
+        const accordion = document.createElement('div');
+        accordion.className = 'accordion';
+        accordion.id = 'results-accordion';
+        container.appendChild(accordion);
+
+        renderResultAccordionSection(accordion, 'errors', 'Errors', errorStats, true);
+        renderResultAccordionSection(accordion, 'slowest', 'Slowest URLs', slowestStats, false);
+        renderResultAccordionSection(accordion, 'fastest', 'Fastest URLs', fastestStats, false);
+    }
+
+    function renderResultAccordionSection(accordion, sectionId, title, statsList, expanded) {
+        const headingId = `${sectionId}-results-heading`;
+        const collapseId = `${sectionId}-results-collapse`;
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'accordion-item';
+        accordionItem.innerHTML = `
+            <h2 class="accordion-header" id="${headingId}">
+                <button class="accordion-button ${expanded ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="${expanded}" aria-controls="${collapseId}">
+                    ${title} (${statsList.length})
+                </button>
+            </h2>
+            <div id="${collapseId}" class="accordion-collapse collapse ${expanded ? 'show' : ''}" aria-labelledby="${headingId}" data-bs-parent="#results-accordion">
+                <div class="accordion-body"></div>
+            </div>
+        `;
+
+        const accordionBody = accordionItem.querySelector('.accordion-body');
+        if (statsList.length === 0) {
+            accordionBody.textContent = 'No URLs in this group.';
+            accordionBody.classList.add('text-muted');
+        } else {
+            statsList.forEach(stats => {
+                accordionBody.appendChild(createResultItem(stats));
+            });
+        }
+
+        accordion.appendChild(accordionItem);
+    }
+
+    function createResultItem(stats) {
             const div = document.createElement('div');
             div.className = `result-item ${stats.statusClass}`;
             
@@ -972,9 +1149,12 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
                 <div class="mt-2">
                     <strong>Status Codes:</strong> ${statusDisplay}
                 </div>
+                <div class="mt-2">
+                    <strong>X-Nextjs-Cache:</strong> ${stats.nextjsCacheDisplay}<br>
+                    <strong>Cf-Cache-Status:</strong> ${stats.cfCacheDisplay}
+                </div>
             `;
             
-            container.appendChild(div);
-        });
+            return div;
     }
 });

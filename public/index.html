@@ -341,6 +341,31 @@
         .result-item .row {
             margin-top: 10px;
         }
+
+        .accordion-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        .accordion-button {
+            background: var(--card-hover);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+
+        .accordion-button::after {
+            filter: invert(1);
+        }
+
+        .accordion-body {
+            background: var(--card-bg);
+        }
         
         .success {
             border-left: 4px solid #20e3b2;
@@ -602,10 +627,10 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="max-urls" class="form-label">Max URLs to Test</label>
-                                <input type="range" class="form-range" min="10" max="100" step="10" value="100" id="max-urls">
+                                <input type="range" class="form-range" min="1" max="100" step="1" value="100" id="max-urls">
                                 <div class="d-flex justify-content-between">
-                                    <small>10%</small>
-                                    <small id="max-urls-value">100%</small>
+                                    <small>1%</small>
+                                    <small id="max-urls-value">100% (0 URLs)</small>
                                     <small>100%</small>
                                 </div>
                             </div>
@@ -656,6 +681,7 @@
                     <span class="badge bg-success me-2">Success: <span id="live-success-count">0</span></span>
                     <span class="badge bg-danger me-2">Errors: <span id="live-error-count">0</span></span>
                     <span class="badge bg-info me-2">Avg Time: <span id="live-avg-time">0</span> ms</span>
+                    <span class="badge bg-info me-2">Cache Hits: <span id="live-cache-hit-rate">0</span>%</span>
                     <span class="badge bg-warning text-dark">Active Users: <span id="live-active-requests">0</span></span>
                 </div>
                 <div class="mb-3">
@@ -666,6 +692,7 @@
                     <div class="d-flex justify-content-center gap-3 mt-2">
                         <small><span style="display: inline-block; width: 12px; height: 12px; background: #20e3b2; border-radius: 2px;"></span> Avg Response Time</small>
                         <small><span style="display: inline-block; width: 12px; height: 12px; background: #667eea; border-radius: 2px;"></span> Target (1s)</small>
+                        <small><span style="display: inline-block; width: 12px; height: 12px; background: #ff9f43; border-radius: 2px;"></span> Cache Hit Rate</small>
                     </div>
                 </div>
                 <button id="abort-test" class="btn btn-danger">Abort Test</button>
@@ -703,7 +730,7 @@
             </div>
             
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
                             <h4>⚡ Response Time Distribution (ms)</h4>
@@ -715,7 +742,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
                             <h4>📈 Status Code Distribution</h4>
@@ -727,12 +754,24 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Cache Status Distribution</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="cache-status-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="card mt-4">
                 <div class="card-header">
                     <h4>📋 Results by URL</h4>
-                    <small class="text-muted">Aggregated statistics for each tested URL</small>
+                    <small class="text-muted">Errors and a proportional set of fastest and slowest URLs</small>
                 </div>
                 <div class="card-body">
                     <div id="results-container"></div>
@@ -742,6 +781,7 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

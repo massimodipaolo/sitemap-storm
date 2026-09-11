@@ -344,6 +344,8 @@ async function testUrl(url, customHeaders = {}) {
       status,
       statusText,
       responseTime,
+      nextjsCacheStatus: response.headers['x-nextjs-cache'] || 'Not reported',
+      cfCacheStatus: response.headers['cf-cache-status'] || 'Not reported',
       success: status >= 200 && status < 400
     };
     
@@ -355,6 +357,8 @@ async function testUrl(url, customHeaders = {}) {
       status: error.response ? error.response.status : 'error',
       statusText: error.message,
       responseTime: Date.now() - startTime,
+      nextjsCacheStatus: error.response?.headers?.['x-nextjs-cache'] || 'Unavailable',
+      cfCacheStatus: error.response?.headers?.['cf-cache-status'] || 'Unavailable',
       success: false
     };
     
