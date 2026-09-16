@@ -8,7 +8,9 @@ const axios = require('axios');
 const https = require('https');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const portFlagIndex = process.argv.indexOf('--port');
+const portFlagValue = process.argv.find(argument => argument.startsWith('--port='))?.split('=')[1];
+const PORT = portFlagValue || process.argv[portFlagIndex + 1] || process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());

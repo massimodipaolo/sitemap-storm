@@ -47,6 +47,14 @@ npm start
 
 The application will be available at http://localhost:3000
 
+To use a different port, pass it to the start script:
+
+```bash
+npm start -- --port 3001
+```
+
+The application will then be available at http://localhost:3001.
+
 ## 📖 Usage
 
 1. Open your browser and navigate to http://localhost:3000
@@ -69,6 +77,9 @@ The application will be available at http://localhost:3000
 ```bash
 npm start     # Start the production server
 npm run dev   # Start development server with auto-reload
+
+# Start on a specific port
+npm start -- --port 3001
 ```
 
 ## 📄 Sample Sitemap
