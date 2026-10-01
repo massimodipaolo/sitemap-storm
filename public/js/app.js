@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {    // DOM elements
     const sitemapFileInput = document.getElementById('sitemap-file');
     const sitemapUrlInput = document.getElementById('sitemap-url');
+    const hostMappingsInput = document.getElementById('host-mappings');
     const fetchSitemapBtn = document.getElementById('fetch-sitemap');
     const sitemapPreview = document.getElementById('sitemap-preview');
     const urlCountSpan = document.getElementById('url-count');
@@ -255,10 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url }),
+            body: JSON.stringify({ url, hostMappings: hostMappingsInput.value }),
         })
         .then(response => response.json())
         .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to fetch sitemap');
+            }
             if (data.success && data.urls && data.urls.length > 0) {
                 sitemapUrls = data.urls;
                 urlCountSpan.textContent = sitemapUrls.length;
@@ -273,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
         .catch(error => {
             console.error('Error:', error);
             alert('Error fetching sitemap: ' + error.message);
-            sitemapUrlInput.value = '';
         })
         .finally(() => {
             fetchSitemapBtn.disabled = false;
@@ -564,7 +567,8 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             urls: urlsToTest,
             concurrency,
             delay: delayMs,
-            headers: customHeaders
+            headers: customHeaders,
+            hostMappings: hostMappingsInput.value
         };
         
         // Start SSE connection
@@ -575,9 +579,10 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
             },
             body: JSON.stringify(requestBody)
         })
-        .then(response => {
+        .then(async response => {
             if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || `HTTP error ${response.status}`);
             }
             
             const reader = response.body.getReader();
@@ -614,6 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {    // DOM elements
         })
         .catch(error => {
             console.error('Error during stress test:', error);
+            stopRateTracking();
             alert('Error running stress test: ' + error.message);
             progressText.textContent = `Error: ${error.message}`;
             progressBar.classList.add('bg-danger');

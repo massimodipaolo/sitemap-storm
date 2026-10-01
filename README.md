@@ -14,6 +14,7 @@ Web application for stress testing websites using sitemap.xml files to determine
   - Delay between batches (0-2000ms)
   - Max URLs to test (10% to 100% of sitemap)
   - Custom HTTP headers support (for authentication, API keys, etc.)
+  - Custom host mappings for sitemap fetching and page requests
 
 - **Real-Time Monitoring**
   - Live progress tracking with animated charts
@@ -72,11 +73,29 @@ The application will then be available at http://localhost:3001.
 6. **Monitor** real-time progress with live charts
 7. **Analyze** detailed results in the dashboard
 
+## Custom Host Resolution
+
+Before fetching a sitemap, enter optional rules in **Host mappings**, one per line:
+
+```text
+MAP 127.0.0.1 dev.example.com
+MAP ::1 ipv6.example.com
+```
+
+Fetch a URL such as `http://dev.example.com:8080/sitemap.xml`, then start the test. The same mappings apply to sitemap fetching, page requests (including URLs from uploaded sitemaps), and redirects. Unmapped hostnames use normal DNS. Clear the field to disable the override.
+
+Rules use `MAP <IP address> <hostname>` with exact, case-insensitive hostnames. IPv4 and IPv6 addresses are supported; wildcards, ports in rules, and duplicate hostnames are rejected. The original URL, HTTP `Host` header, TLS server name, scheme, and port are preserved. For example, an HTTPS URL still requires a local HTTPS listener on the URL's port.
+
+Mappings are scoped to each API request/test and never modify the system hosts file. `127.0.0.1` and `::1` refer to the machine or container running the Node.js server, not necessarily your browser. When mappings are present, outbound requests bypass environment-configured HTTP/HTTPS proxies so DNS resolution happens locally. The existing HTTPS certificate-verification behavior is unchanged.
+
+API clients can send the same multiline string as `hostMappings` in the JSON body of `/api/sitemap/fetch`, `/api/stress-test-stream`, and `/api/stress-test`. Include it on each request. Invalid rules return HTTP 400 with an error message before any outbound requests or streaming events.
+
 ## 📋 Scripts
 
 ```bash
 npm start     # Start the production server
 npm run dev   # Start development server with auto-reload
+npm test      # Run resolver and API tests (Node.js 18+)
 
 # Start on a specific port
 npm start -- --port 3001

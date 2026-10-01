@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const xml2js = require('xml2js');
 const axios = require('axios');
-const https = require('https');
+const { createRequestOptions } = require('./host-resolver');
 
 const app = express();
 const portFlagIndex = process.argv.indexOf('--port');
@@ -17,6 +17,21 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));  // Increased limit for large sitemaps
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
+
+function configureHostResolver(req, res, next) {
+  let requestOptions;
+  try {
+    requestOptions = createRequestOptions(req.body.hostMappings);
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+  res.locals.requestOptions = requestOptions;
+  res.on('finish', () => {
+    requestOptions.httpAgent?.destroy();
+    requestOptions.httpsAgent?.destroy();
+  });
+  next();
+}
 
 // Route for sample sitemap (informational purpose)
 app.get('/sample-sitemap', (req, res) => {
@@ -79,7 +94,7 @@ app.post('/api/sitemap', async (req, res) => {
 });
 
 // Fetch sitemap from URL
-app.post('/api/sitemap/fetch', async (req, res) => {
+app.post('/api/sitemap/fetch', configureHostResolver, async (req, res) => {
   try {
     const { url } = req.body;
     
@@ -90,13 +105,11 @@ app.post('/api/sitemap/fetch', async (req, res) => {
     console.log(`Fetching sitemap from URL: ${url}`);
     
     const response = await axios.get(url, {
+      ...res.locals.requestOptions,
       timeout: 30000,
       headers: {
         'User-Agent': 'Sitemap-Stress-Tester/1.0'
-      },
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-      })
+      }
     });
     
     if (response.status !== 200) {
@@ -112,7 +125,7 @@ app.post('/api/sitemap/fetch', async (req, res) => {
 });
 
 // Stress test endpoint with Server-Sent Events for real-time progress
-app.post('/api/stress-test-stream', (req, res) => {
+app.post('/api/stress-test-stream', configureHostResolver, (req, res) => {
   const { urls, concurrency, delay, headers } = req.body;
   
   // Basic validation
@@ -139,7 +152,7 @@ app.post('/api/stress-test-stream', (req, res) => {
   // Run the test with progress callbacks
   performStressTestStreaming(urls, validatedConcurrency, validatedDelay, headers, (event) => {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
-  })
+  }, res.locals.requestOptions)
   .then(() => {
     res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
     res.end();
@@ -157,7 +170,7 @@ app.post('/api/stress-test-stream', (req, res) => {
 });
 
 // Stress test endpoint (kept for backward compatibility)
-app.post('/api/stress-test', async (req, res) => {
+app.post('/api/stress-test', configureHostResolver, async (req, res) => {
   try {
     const { urls, concurrency, delay, headers } = req.body;
       // Basic validation
@@ -176,7 +189,7 @@ app.post('/api/stress-test', async (req, res) => {
     
     // Run the test and send results
     console.log(`Starting stress test with ${urlsToTest.length} URLs, concurrency ${validatedConcurrency}, delay ${validatedDelay}ms`);
-    const results = await performStressTest(urlsToTest, validatedConcurrency, validatedDelay, headers);
+    const results = await performStressTest(urlsToTest, validatedConcurrency, validatedDelay, headers, res.locals.requestOptions);
     res.json({ success: true, results });
   } catch (error) {
     console.error('Error during stress test:', error);
@@ -195,7 +208,7 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-async function performStressTestStreaming(urls, concurrency = 3, delayMs = 500, customHeaders = {}, onProgress) {
+async function performStressTestStreaming(urls, concurrency = 3, delayMs = 500, customHeaders = {}, onProgress, requestOptions) {
   const results = [];
   const totalUrls = urls.length;
   const totalRequests = totalUrls * concurrency; // Each "user" tests all URLs
@@ -230,7 +243,7 @@ async function performStressTestStreaming(urls, concurrency = 3, delayMs = 500, 
       
       try {
         // Test the URL
-        const result = await testUrl(url, customHeaders);
+        const result = await testUrl(url, customHeaders, requestOptions);
         result.userId = user.userId; // Track which user made the request
         result.urlIndex = currentUrlIndex;
         results.push(result);
@@ -280,7 +293,7 @@ async function performStressTestStreaming(urls, concurrency = 3, delayMs = 500, 
 }
 
 // Perform stress test logic (kept for backward compatibility)
-async function performStressTest(urls, concurrency = 3, delayMs = 500, customHeaders = {}) {
+async function performStressTest(urls, concurrency = 3, delayMs = 500, customHeaders = {}, requestOptions) {
   const results = [];
   const urlQueue = [...urls];
   const totalUrls = urls.length;
@@ -288,7 +301,7 @@ async function performStressTest(urls, concurrency = 3, delayMs = 500, customHea
   // Process URLs in chunks based on concurrency
   while (urlQueue.length > 0) {
     const chunk = urlQueue.splice(0, concurrency);
-    const chunkPromises = chunk.map(url => testUrl(url, customHeaders));
+    const chunkPromises = chunk.map(url => testUrl(url, customHeaders, requestOptions));
     
     const chunkResults = await Promise.all(chunkPromises);
     results.push(...chunkResults);
@@ -316,7 +329,7 @@ async function performStressTest(urls, concurrency = 3, delayMs = 500, customHea
 }
 
 // Test individual URL
-async function testUrl(url, customHeaders = {}) {
+async function testUrl(url, customHeaders = {}, requestOptions) {
   const startTime = Date.now();
   let status = 'error';
   let statusText = '';
@@ -329,12 +342,10 @@ async function testUrl(url, customHeaders = {}) {
     };
     
     const response = await axios.get(url, {
+      ...requestOptions,
       timeout: 30000, // 30 seconds timeout
       validateStatus: () => true, // Accept all status codes
-      headers,
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false // Skip certificate validation
-      })
+      headers
     });
     
     status = response.status;
@@ -370,6 +381,10 @@ async function testUrl(url, customHeaders = {}) {
 }
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

@@ -581,7 +581,13 @@
             <div class="card-header">
                 <h3>🎯 Setup Load Test</h3>
             </div>
-            <div class="card-body">                <div class="mb-3">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="host-mappings" class="form-label">Host mappings (optional)</label>
+                    <textarea class="form-control font-monospace" id="host-mappings" rows="3"
+                        spellcheck="false" autocapitalize="off" placeholder="MAP 127.0.0.1 dev.example.com"></textarea>
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Sitemap Source</label>
                     <div class="mb-2">
                         <label for="sitemap-file" class="form-label">Upload Sitemap XML File</label>
